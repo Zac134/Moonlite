@@ -865,8 +865,7 @@ function MoonTrack.ReplaceElementByPath(self: MoonTrack, targetPath: string, rep
 
 			if itemType == "Rig" or replacement:IsA(path.ItemType) then
 				item.Override = replacement
-				compileRouting(self)
-
+				self._compiled = false
 				return true
 			end
 		end
@@ -902,15 +901,22 @@ function MoonTrack.Stop(self: MoonTrack)
 end
 
 function MoonTrack.Reset(self: MoonTrack)
+	if not self._compiled then
+		compileRouting(self)
+	end
+
 	self.TimePosition = 0
 	stepTrack(self, 0)
-
 	return true
 end
 
 function MoonTrack.Play(self: MoonTrack)
 	if PlayingTracks[self] then
 		return
+	end
+
+	if not self._compiled then
+		compileRouting(self)
 	end
 
 	if self.TimePosition >= self:GetTimeLength() then
