@@ -1,7 +1,7 @@
 [package]
 name = "zac134/moonlite"
 description = "A fork of moonlite to update wally. Original A light-weight, runtime player for sequences created in Moon Animator 2."
-version = "0.9.11"
+version = "0.9.12"
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
