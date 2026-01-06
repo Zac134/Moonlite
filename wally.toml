@@ -1,9 +1,9 @@
 [package]
-name = "maximumadhd/moonlite"
-description = "A light-weight, runtime player for sequences created in Moon Animator 2."
-version = "0.9.0"
+name = "zac134/moonlite"
+description = "A fork of moonlite to update wally. Original A light-weight, runtime player for sequences created in Moon Animator 2."
+version = "0.9.1"
 license = "MIT"
-registry = "https://github.com/MaximumADHD/Moonlite"
+registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
