@@ -41,6 +41,7 @@ type MoonElementLocks = Types.MoonElementLocks
 type MoonKeyframePack = Types.MoonKeyframePack
 type MoonMarkerSignals = Types.MoonMarkerSignals
 type GetSet<Inst, Value> = Types.GetSet<Inst, Value>
+type CreateOptions = Types.CreateOptions
 
 local MoonTrack = {}
 MoonTrack.__index = MoonTrack
@@ -737,7 +738,7 @@ local function stepTrack(self: MoonTrack, dt: number)
 	return false
 end
 
-function Moonlite.CreatePlayer(save: StringValue, root: Instance?): MoonTrack
+function Moonlite.CreatePlayer(save: StringValue, root: Instance?, options: CreateOptions): MoonTrack
 	local data: MoonAnimSave = HttpService:JSONDecode(save.Value)
 	local completed = Instance.new("BindableEvent")
 
@@ -767,7 +768,10 @@ function Moonlite.CreatePlayer(save: StringValue, root: Instance?): MoonTrack
 		_root = root,
 	}, MoonTrack)
 
-	compileRouting(self)
+	if options.ShouldCompileOnCreate ~= false then
+		compileRouting(self)
+	end
+
 	return self
 end
 

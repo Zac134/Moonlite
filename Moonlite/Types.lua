@@ -142,4 +142,8 @@ export type GetSet<Value, Args...> = {
 	Default: Value?,
 }
 
+export type CreateOptions = {
+	ShouldCompileOnCreate: boolean?,
+}
+
 return {}
