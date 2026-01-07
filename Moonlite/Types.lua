@@ -146,4 +146,13 @@ export type CreateOptions = {
 	ShouldCompileOnCreate: boolean?,
 }
 
+export type RelativeTransformData = {
+	Initial: CFrame,
+	Base: CFrame?,
+}
+
+export type RelativeTransforms = {
+	[Instance]: RelativeTransformData,
+}
+
 return {}

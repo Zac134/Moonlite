@@ -33,9 +33,12 @@ When syncing by default with rojo, the module can be found directly in the `Repl
 
 ### CreatePlayer
 ```luau
-Moonlite.CreatePlayer(save: StringValue, root: Instance?) -> MoonTrack
+Moonlite.CreatePlayer(save: StringValue, root: Instance?, options: CreateOptions?) -> MoonTrack
 ```
 Loads the provided save file to be played back. The `save` is a StringValue normally stored in `game.ServerStorage.MoonAnimator2Saves`, but you'll need to store it elsewhere to play the sequence back on the client.
+
+The `options` parameter accepts a table with the following fields:
+- `ShouldCompileOnCreate: boolean?` - If set to `false`, the track will not be compiled immediately. Defaults to `true`.
 
 ## MoonTrack
 ```luau
@@ -124,10 +127,69 @@ Returns the first element in this track which satisfies `element:IsA(typeName)`,
 
 ### ReplaceElementByPath
 ```luau
-MoonTrack:ReplaceElementByPath(path: string, replacement: Instance)
+MoonTrack:ReplaceElementByPath(path: string, replacement: Instance) -> boolean
 ```
 
-Attempts to replace an element by its defined absolute path with a specific Instance.
+Attempts to replace an element by its defined absolute path with a specific Instance. Returns `true` if the element was successfully replaced.
+
+### SetRelativeTransform
+```luau
+MoonTrack:SetRelativeTransform(inst: Instance, initialCFrame: CFrame) -> ()
+```
+
+Sets the initial CFrame for relative transform calculations. When set, CFrame, Position, and Orientation animations will be played relative to the specified initial CFrame instead of using absolute values from the animation.
+
+This is useful when the animation was created at a different world position than where it needs to be played in-game.
+
+### ClearRelativeTransform
+```luau
+MoonTrack:ClearRelativeTransform(inst: Instance) -> ()
+```
+
+Removes the relative transform setting for the specified instance, reverting to absolute animation values.
+
+### GetRelativeTransform
+```luau
+MoonTrack:GetRelativeTransform(inst: Instance) -> CFrame?
+```
+
+Returns the initial CFrame set for relative transform, or nil if not set.
+
+### GetTimeLength
+```luau
+MoonTrack:GetTimeLength() -> number
+```
+Returns the total length of the track in seconds.
+
+### GetMarkerReachedSignal
+```luau
+MoonTrack:GetMarkerReachedSignal(marker: string) -> RBXScriptSignal
+```
+Returns a signal that fires when the specified marker is reached during playback. The signal passes the target instance and marker data as parameters.
+
+### GetMarkerEndedSignal
+```luau
+MoonTrack:GetMarkerEndedSignal(marker: string) -> RBXScriptSignal
+```
+Returns a signal that fires when the specified marker ends during playback. The signal passes the target instance and marker data as parameters.
+
+### GetSetting
+```luau
+MoonTrack:GetSetting(name: string) -> any
+```
+Retrieves a custom setting value stored in the track's scratchpad.
+
+### SetSetting
+```luau
+MoonTrack:SetSetting(name: string, value: any) -> ()
+```
+Stores a custom setting value in the track's scratchpad.
+
+### Destroy
+```luau
+MoonTrack:Destroy() -> ()
+```
+Cleans up the track by destroying all internal signals and clearing data. Call this when you're done with the track to prevent memory leaks.
 
 ### Looped
 ```luau
@@ -135,12 +197,36 @@ MoonTrack.Looped: boolean
 ```
 If set to `true`, this track's playback will loop on completion. This defaults to the value specified by the author of this sequence, and should be set explicitly if expected to behave one way or the other.
 
+### Frames
+```luau
+MoonTrack.Frames: number
+```
+The total number of frames in the track. This is read-only and set when the track is created.
+
+### FrameRate
+```luau
+MoonTrack.FrameRate: number
+```
+The frame rate (FPS) of the track. This defaults to the value specified in the sequence, typically 60 FPS. This is read-only.
+
+### TimePosition
+```luau
+MoonTrack.TimePosition: number
+```
+The current playback position in seconds. This can be read to get the current position or written to seek to a specific time.
+
+### RestoreDefaults
+```luau
+MoonTrack.RestoreDefaults: boolean
+```
+If set to `true`, the track will restore element properties to their original values when stopped. This defaults to `true`.
+
 ---
 
 ### Completed
 ```luau
 MoonTrack.Completed: RBXScriptSignal
 ```
-Fires upon all of the track's elements completing their playback.
+Fires upon all of the track's elements completing their playback. Passes a `PlaybackState` enum value indicating how the track completed (Completed, Cancelled, or Playing).
 
 ---

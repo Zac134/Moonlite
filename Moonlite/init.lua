@@ -42,6 +42,7 @@ type MoonKeyframePack = Types.MoonKeyframePack
 type MoonMarkerSignals = Types.MoonMarkerSignals
 type GetSet<Inst, Value> = Types.GetSet<Inst, Value>
 type CreateOptions = Types.CreateOptions
+type RelativeTransforms = Types.RelativeTransforms
 
 local MoonTrack = {}
 MoonTrack.__index = MoonTrack
@@ -51,6 +52,12 @@ local CONSTANT_INTERPS = {
 	["boolean"] = true,
 	["string"] = true,
 	["nil"] = true,
+}
+
+local TRANSFORM_PROPS = {
+	CFrame = true,
+	Position = true,
+	Orientation = true,
 }
 
 -- stylua: ignore
@@ -77,6 +84,7 @@ export type MoonTrack = typeof(setmetatable({} :: {
 
 	_scratch: Scratchpad,
 	_compiled: boolean,
+	_relativeTransforms: RelativeTransforms,
 }, MoonTrack))
 
 local PlayingTracks = {} :: {
@@ -274,6 +282,30 @@ local function setPropValue(self: MoonTrack, inst: Instance?, prop: string, valu
 	return pcall(function()
 		(inst :: any)[prop] = value
 	end)
+end
+type RelativeTransformProp = "CFrame" | "Position" | "Orientation"
+local function applyRelativeTransform(self: MoonTrack, inst: Instance, prop: RelativeTransformProp, value: any): any
+	local relData = self._relativeTransforms[inst]
+	if not relData or not relData.Base then
+		return value
+	end
+
+	local initial = relData.Initial
+	local base = relData.Base
+
+	if prop == "CFrame" then
+		return initial * (base:Inverse() * value)
+	elseif prop == "Position" then
+		return initial.Position + (value - base.Position)
+	elseif prop == "Orientation" then
+		local baseX, baseY, baseZ = base:ToOrientation()
+		local baseOri = Vector3.new(math.deg(baseX), math.deg(baseY), math.deg(baseZ))
+		local initialX, initialY, initialZ = initial:ToOrientation()
+		local initialOri = Vector3.new(math.deg(initialX), math.deg(initialY), math.deg(initialZ))
+		return initialOri + (value - baseOri)
+	end
+
+	return value
 end
 
 local function parseKeyframePack(kf: Instance): MoonKeyframePack
@@ -487,11 +519,17 @@ local function compileItem(self: MoonTrack, item: MoonAnimItem, targets: MoonTar
 			default = readValue(default)
 		end
 
+		local sequence = unpackKeyframes(prop)
+
 		props[name] = {
 			Default = default,
 			Static = Specials.Static(target, name),
-			Sequence = unpackKeyframes(prop),
+			Sequence = sequence,
 		}
+
+		if name == "CFrame" and self._relativeTransforms[target] and sequence[1] then
+			self._relativeTransforms[target].Base = sequence[1].Value
+		end
 	end
 
 	targets[target] = {
@@ -711,6 +749,9 @@ local function stepTrack(self: MoonTrack, dt: number)
 		end
 
 		for name, value in props do
+			if TRANSFORM_PROPS[name] then
+				value = applyRelativeTransform(self, instance, name, value)
+			end
 			setPropValue(self, instance, name, value)
 		end
 	end
@@ -766,6 +807,7 @@ function Moonlite.CreatePlayer(save: StringValue, root: Instance?, options: Crea
 
 		_scratch = {},
 		_root = root,
+		_relativeTransforms = {},
 	}, MoonTrack)
 
 	if options.ShouldCompileOnCreate ~= false then
@@ -872,6 +914,24 @@ function MoonTrack.ReplaceElementByPath(self: MoonTrack, targetPath: string, rep
 	end
 
 	return false
+end
+
+function MoonTrack.SetRelativeTransform(self: MoonTrack, inst: Instance, initialCFrame: CFrame)
+	self._relativeTransforms[inst] = {
+		Initial = initialCFrame,
+		Base = nil,
+	}
+	self._compiled = false
+end
+
+function MoonTrack.ClearRelativeTransform(self: MoonTrack, inst: Instance)
+	self._relativeTransforms[inst] = nil
+	self._compiled = false
+end
+
+function MoonTrack.GetRelativeTransform(self: MoonTrack, inst: Instance): CFrame?
+	local data = self._relativeTransforms[inst]
+	return data and data.Initial
 end
 
 function MoonTrack.FindElement(self: MoonTrack, name: string): Instance?
