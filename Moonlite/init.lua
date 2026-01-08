@@ -678,7 +678,7 @@ local function compileFrames(self: MoonTrack, targets: MoonTarget)
 			if not value.Static and lastFrame < self.Frames then
 				local cache = frames[lastFrame][name]
 
-				for i = lastFrame, self.FrameRate do
+				for i = lastFrame, self.Frames do
 					if not frames[i] then
 						frames[i] = {}
 					end
